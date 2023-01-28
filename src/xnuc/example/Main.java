@@ -1,11 +1,12 @@
 package xnuc.example;
 
 import xnuc.context.Context;
+import xnuc.example.depend.C;
 
 public class Main {
     public static void main(String[] args) throws Exception {
         Context ioc = Context.run(Main.class);
-        A a = (A) ioc.get("a");
-        System.out.println(a.getC().getA().getB().getName());
+        C c = (C) ioc.get("c");
+        System.out.println(c.getA().getB().getName());
     }
 }
