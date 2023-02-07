@@ -35,11 +35,22 @@ public class B {
     // constructor
 }
 @Named("c")
-public class C {
+public class C implements Print {
     @Inject
     public A a;
     // getter and setter
     // constructor
+    @Override
+    public void print() {
+        System.out.println(a.getB().getName());
+    }
+}
+@Aspect
+public class CAspect {
+    @Pointcut("xnuc.example.depend.C#print")
+    public void log() {
+        System.out.println(String.format("ts:%d", System.currentTimeMillis()));
+    }
 }
 ```
 
@@ -47,13 +58,13 @@ public class C {
 
 ```java
 import xnuc.context.Context;
-import xnuc.example.depend.C;
+import xnuc.example.depend.Print;
 
 public class Main {
     public static void main(String[] args) throws Exception {
         Context ioc = Context.run(Main.class);
-        C c = (C) ioc.get("c");
-        System.out.println(c.getA().getB().getName());
+        Print c = (Print) ioc.get("c");
+        c.print();
     }
 }
 ```
