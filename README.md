@@ -1,2 +1,3 @@
-# impmi
-impmi 简单的依赖注入容器
+# insni
+
+> insni - 轻量的依赖注入容器
