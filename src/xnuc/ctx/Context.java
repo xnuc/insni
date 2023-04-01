@@ -6,10 +6,13 @@ public class Context {
     public java.util.Map<String, Object> unreadyInstances;
     public java.util.Map<String, Class<?>> defineds;
 
+    public java.util.Map<String, java.util.AbstractMap.SimpleEntry<Object, java.lang.reflect.Method>> advices; // AOP
+
     public Context() {
         this.instances = new java.util.HashMap<>();
         this.unreadyInstances = new java.util.HashMap<>();
         this.defineds = new java.util.HashMap<>();
+        this.advices = new java.util.HashMap<>(); // AOP
     }
 
     public static Context run(Class<?> clz) throws Exception {
@@ -31,6 +34,17 @@ public class Context {
         for (var c : clzList) {
             if (c.getAnnotation(Named.class) != null) {
                 defineds.put(c.getAnnotation(Named.class).value(), c);
+            }
+            if (c.getAnnotation(Aspect.class) != null) { // AOP
+                for (var method : c.getMethods()) {
+                    if (method.getAnnotation(Pointcut.class) != null) {
+                        advices.put(
+                                method.getAnnotation(Pointcut.class).value(),
+                                new java.util.AbstractMap.SimpleEntry<>(
+                                        c.getDeclaredConstructor().newInstance(),
+                                        method));
+                    }
+                }
             }
         }
         return this;
@@ -74,6 +88,29 @@ public class Context {
                 var descriptor = new java.beans.PropertyDescriptor(field.getName(), clz);
                 descriptor.getWriteMethod().invoke(rto, get(field.getName()));
             }
+        }
+        if (clz.getInterfaces().length != 0) { // AOP
+            rto = java.lang.reflect.Proxy.newProxyInstance(clz.getClassLoader(), clz.getInterfaces(),
+                    new java.lang.reflect.InvocationHandler() {
+                        private Object target;
+
+                        @Override
+                        public Object invoke(Object proxy, java.lang.reflect.Method method, Object[] args)
+                                throws Throwable {
+                            if (advices.get(String.format("%s#%s", clz.getName(), method.getName())) != null) {
+                                advices.get(String.format("%s#%s", clz.getName(), method.getName())).getValue()
+                                        .invoke(advices.get(String.format("%s#%s", clz.getName(), method.getName()))
+                                                .getKey());
+                            }
+                            Object invoke = method.invoke(target, args);
+                            return invoke;
+                        }
+
+                        public java.lang.reflect.InvocationHandler accept(Object target) {
+                            this.target = target;
+                            return this;
+                        }
+                    }.accept(rto));
         }
         return rto;
     }
