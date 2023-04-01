@@ -16,7 +16,7 @@ public class C implements Runnable {
     public C() {
     }
 
-    @Override
+    @Override // DONT EDIT ME
     public void run() {
         java.util.logging.Logger.getGlobal().info(String.format("name:%s", a.getB().getName()));
     }
